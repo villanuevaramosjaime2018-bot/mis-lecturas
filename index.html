@@ -599,7 +599,7 @@ function joinDictation(prev, raw){
     .replace(/ ?\n ?/g, '\n')
     .replace(/ ([,.;:?!…»)])/g, '$1')
     .replace(/([¿¡«(]) /g, '$1')
-    .replace(/([,;:])\1+/g, '$1').replace(/\.{2,}/g, '…')
+    .replace(/([,;:])\1+/g, '$1').replace(/\.{2,}/g, '…').replace(/([?!…»)]?[?!…])\./g, '$1')
     .replace(/([,.;:?!…»)])(?=[\p{L}\d¿¡«(])/gu, '$1 ')
     .replace(/([\p{L}\d])([¿¡«(])/gu, '$1 $2');
   // Mayúscula tras fin de oración dentro del trozo
@@ -607,6 +607,7 @@ function joinDictation(prev, raw){
   s = s.replace(/^ +/, '').replace(/ +$/, s.endsWith('\n') ? '' : '');
   if (!s.trim() && !s.includes('\n')) return prev;
   const base = prev.replace(/[ \t]+$/, '');
+  if (/[?!…]$/.test(base)) s = s.replace(/^\./, '');
   if (endsSentence(base)) s = s.replace(/^([¿¡«(]*)(\p{Ll})/u, (m, a, c) => a + c.toUpperCase());
   let sep = ' ';
   if (!base || base.endsWith('\n') || /[¿¡«(]$/.test(base) || /^[,.;:?!…»)\n]/.test(s)) sep = '';
