@@ -1,0 +1,1093 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mis Lecturas</title>
+<meta name="description" content="Dicta resúmenes de tus libros y guárdalos en tu Google Drive.">
+<meta name="theme-color" content="#CDB4DB">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="config.js"></script>
+<style>
+:root{
+  --lav:#CDB4DB; --pink:#FFC8DD; --pink2:#FFAFCC; --sky:#BDE0FE; --mint:#CDEAC0; --cream:#FFF5E1;
+  --bg:#FFF8EC; --card:#FFFFFF; --ink:#3B3350; --muted:#7C7392; --line:#EFE6F4;
+  --btn-ink:#2E2640; --shadow:0 6px 22px rgba(92,64,120,.10), 0 1px 3px rgba(92,64,120,.08);
+  --field:#FBF7FD; --danger:#C2557A; --ok:#4E8A45;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1D1A25; --card:#2A2635; --ink:#F3EEFA; --muted:#B5A9C7; --line:#3A3448;
+    --shadow:0 6px 22px rgba(0,0,0,.35); --field:#332E40; --danger:#FFAFCC; --ok:#CDEAC0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1D1A25; --card:#2A2635; --ink:#F3EEFA; --muted:#B5A9C7; --line:#3A3448;
+  --shadow:0 6px 22px rgba(0,0,0,.35); --field:#332E40; --danger:#FFAFCC; --ok:#CDEAC0;
+  color-scheme: dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:'Nunito', ui-rounded, 'SF Pro Rounded', system-ui, sans-serif;
+  font-size:18px; line-height:1.5; min-height:100vh; -webkit-tap-highlight-color:transparent;
+}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+.hidden{display:none !important}
+
+/* Barra superior */
+.topbar{
+  position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:8px;
+  padding:calc(10px + env(safe-area-inset-top)) 16px 10px; background:color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+}
+.icon-btn{
+  width:44px; height:44px; border-radius:14px; border:none; background:var(--card); box-shadow:var(--shadow);
+  display:grid; place-items:center; font-size:20px; flex:none;
+}
+.brand{flex:1; min-width:0; font-weight:800; font-size:19px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.pill{
+  font-size:14px; font-weight:700; padding:6px 12px; border-radius:999px; background:var(--card); box-shadow:var(--shadow);
+  white-space:nowrap; display:flex; align-items:center; gap:6px; flex:none;
+}
+.pill .dot{width:9px;height:9px;border-radius:50%;background:var(--muted)}
+.pill.rec .dot{background:#E5487A; animation:blink 1s infinite}
+.pill.paused .dot{background:#E8B04A}
+.pill.saved .dot,.pill.ready .dot{background:#6BBF5F}
+.pill.listen .dot{background:#5AA7E8; animation:blink 1s infinite}
+.pill.offline .dot{background:#999}
+@keyframes blink{50%{opacity:.25}}
+
+main{max-width:560px; margin:0 auto; padding:8px 16px calc(150px + env(safe-area-inset-bottom))}
+.screen{animation:fade .25s ease}
+@keyframes fade{from{opacity:0; transform:translateY(6px)}to{opacity:1; transform:none}}
+h1{font-size:30px; line-height:1.2; margin:8px 0 6px; font-weight:800}
+h2{font-size:22px; margin:6px 0 10px; font-weight:800}
+.sub{color:var(--muted); margin:0 0 16px}
+.card{background:var(--card); border-radius:24px; box-shadow:var(--shadow); padding:18px; margin:0 0 14px}
+
+/* Botones */
+.btn{
+  border:none; border-radius:18px; padding:14px 18px; font-weight:800; min-height:54px;
+  background:var(--lav); color:var(--btn-ink); box-shadow:var(--shadow); display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  transition:transform .1s ease, filter .2s;
+}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.45; cursor:default}
+.btn.pink{background:var(--pink)} .btn.sky{background:var(--sky)} .btn.mint{background:var(--mint)} .btn.cream{background:var(--cream)}
+.btn.ghost{background:var(--card); color:var(--ink)}
+.btn.block{width:100%}
+.btn.small{min-height:44px; padding:8px 14px; border-radius:14px; font-size:16px}
+.row{display:flex; gap:10px; flex-wrap:wrap}
+.row > .btn{flex:1 1 140px}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+
+/* Bienvenida */
+.hero{text-align:center; padding:28px 8px 8px}
+.hero .logo{width:112px; height:112px; margin:0 auto 14px; border-radius:32px; background:linear-gradient(135deg,var(--lav),var(--pink)); display:grid; place-items:center; box-shadow:var(--shadow)}
+.hero .logo svg{width:64px;height:64px}
+.hero p{color:var(--muted); font-size:19px; margin:4px 0 26px}
+.gbtn{background:#fff !important; color:#3c4043 !important; border:1px solid #dadce0}
+.gbtn svg{width:22px;height:22px}
+
+/* Menú */
+.big{
+  display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-end; text-align:left; gap:4px;
+  width:100%; min-height:150px; border:none; border-radius:28px; padding:20px; margin-bottom:14px; box-shadow:var(--shadow); color:var(--btn-ink);
+}
+.big .em{font-size:38px; line-height:1}
+.big b{font-size:22px; letter-spacing:.5px; font-weight:800}
+.big span{font-size:16px; opacity:.8}
+.big.a{background:linear-gradient(135deg,var(--lav),var(--pink))}
+.big.b{background:linear-gradient(135deg,var(--sky),var(--mint))}
+.note{font-size:15px; color:var(--muted); display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+.switch{display:flex; align-items:center; justify-content:space-between; gap:12px}
+.switch input{appearance:none; width:54px; height:32px; border-radius:99px; background:var(--line); position:relative; flex:none; cursor:pointer; transition:.2s}
+.switch input::after{content:""; position:absolute; top:4px; left:4px; width:24px; height:24px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.25); transition:.2s}
+.switch input:checked{background:var(--lav)}
+.switch input:checked::after{left:26px}
+
+/* Formularios */
+label.lbl{display:block; font-weight:800; font-size:15px; color:var(--muted); margin:4px 0 6px}
+.field{display:flex; gap:8px; margin-bottom:14px}
+.field input, .search{
+  flex:1; min-width:0; height:56px; border-radius:16px; border:2px solid var(--line); background:var(--field); padding:0 16px; font-size:19px; font-weight:600; outline:none;
+}
+.field input:focus, textarea:focus, .search:focus{border-color:var(--lav)}
+.mini-mic{width:56px; height:56px; border-radius:16px; border:none; background:var(--pink); font-size:22px; flex:none; box-shadow:var(--shadow)}
+.mini-mic.on{animation:pulse 1.2s infinite}
+textarea{
+  width:100%; min-height:220px; border-radius:18px; border:2px solid var(--line); background:var(--field); padding:14px 16px; font-size:18px; line-height:1.6; resize:vertical; outline:none;
+}
+#ta-session{min-height:170px; max-height:42vh}
+#s-dictate .row .btn{min-height:50px; padding:10px 12px}
+.interim:empty{display:none}
+.interim{color:var(--muted); font-style:italic; min-height:1.6em; margin:8px 2px 0; font-size:17px}
+.sess-head{display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-bottom:10px}
+.tag{font-size:14px; font-weight:800; background:var(--mint); color:var(--btn-ink); padding:4px 10px; border-radius:99px}
+.tag.sky{background:var(--sky)} .tag.pink{background:var(--pink)} .tag.cream{background:var(--cream)}
+.ask{background:linear-gradient(135deg,var(--cream),var(--pink)); color:var(--btn-ink)}
+.ask h2{margin-top:0}
+
+/* Lista de libros */
+.book{display:flex; gap:14px; align-items:center; width:100%; text-align:left; border:none; background:var(--card); border-radius:22px; padding:14px; margin-bottom:12px; box-shadow:var(--shadow)}
+.cover{width:52px; height:68px; border-radius:10px 14px 14px 10px; flex:none; display:grid; place-items:center; font-weight:800; font-size:22px; color:var(--btn-ink); box-shadow:inset 6px 0 0 rgba(0,0,0,.08)}
+.book .meta{flex:1; min-width:0}
+.book .t{font-weight:800; font-size:19px; line-height:1.25; overflow-wrap:anywhere}
+.book .a{color:var(--muted); font-size:16px}
+.book .s{font-size:14px; color:var(--muted); margin-top:2px}
+.empty{text-align:center; color:var(--muted); padding:30px 10px}
+.empty .em{font-size:46px}
+
+/* Detalle */
+.session{border-left:5px solid var(--lav); padding-left:14px; margin:0 0 20px}
+.session h3{font-size:17px; margin:0 0 6px; color:var(--muted); font-weight:800}
+.session p{margin:0 0 8px; white-space:pre-wrap; overflow-wrap:anywhere}
+.session textarea{min-height:140px}
+.actions{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+.actions .btn{min-height:64px; flex-direction:column; gap:2px; font-size:16px}
+.actions .btn .em{font-size:24px}
+.player{display:flex; flex-direction:column; gap:12px}
+.speeds{display:flex; gap:6px; flex-wrap:wrap}
+.chip{border:none; border-radius:99px; padding:8px 14px; font-weight:800; background:var(--field); font-size:15px}
+.chip.on{background:var(--lav); color:var(--btn-ink)}
+.sticky-save{position:sticky; bottom:calc(16px + env(safe-area-inset-bottom)); z-index:5}
+
+/* Micrófono central */
+.mic-wrap{position:fixed; left:50%; bottom:calc(18px + env(safe-area-inset-bottom)); transform:translateX(-50%); z-index:30; display:flex; flex-direction:column; align-items:center; gap:6px; pointer-events:none}
+.mic{
+  pointer-events:auto; position:relative; width:84px; height:84px; border-radius:50%; border:none;
+  background:linear-gradient(135deg,var(--lav),var(--pink2)); color:#2E2640; box-shadow:0 10px 30px rgba(155,100,180,.45);
+  display:grid; place-items:center;
+}
+.mic svg{width:36px;height:36px; position:relative; z-index:2}
+.mic::before,.mic::after{content:""; position:absolute; inset:0; border-radius:50%; background:var(--pink); z-index:0; opacity:0}
+.mic.rec::before{animation:wave 1.6s ease-out infinite}
+.mic.rec::after{animation:wave 1.6s ease-out .8s infinite}
+.mic.listen::before{background:var(--sky); animation:wave 1.6s ease-out infinite}
+.mic.rec{background:linear-gradient(135deg,var(--pink2),#F28DB2)}
+.mic.listen{background:linear-gradient(135deg,var(--sky),var(--lav))}
+@keyframes wave{0%{transform:scale(1);opacity:.7}100%{transform:scale(1.9);opacity:0}}
+@keyframes pulse{50%{box-shadow:0 0 0 8px color-mix(in srgb, var(--pink) 50%, transparent)}}
+.bars{display:flex; gap:3px; height:14px; align-items:flex-end}
+.bars i{width:4px; background:var(--pink2); border-radius:2px; height:4px}
+.mic-wrap.rec .bars i{animation:bar .9s ease-in-out infinite}
+.bars i:nth-child(2){animation-delay:.15s !important}.bars i:nth-child(3){animation-delay:.3s !important}.bars i:nth-child(4){animation-delay:.45s !important}.bars i:nth-child(5){animation-delay:.6s !important}
+@keyframes bar{50%{height:14px}}
+.mic-label{font-size:13px; font-weight:800; color:var(--muted); background:var(--card); padding:3px 10px; border-radius:99px; box-shadow:var(--shadow)}
+
+/* Avisos */
+.toast{
+  position:fixed; left:50%; top:calc(74px + env(safe-area-inset-top)); transform:translate(-50%,-20px); opacity:0; z-index:50;
+  background:var(--ink); color:var(--bg); padding:9px 16px; border-radius:14px; font-weight:700; font-size:15px; line-height:1.35; max-width:calc(100% - 32px); width:max-content;
+  transition:.3s; pointer-events:none; text-align:center; box-shadow:var(--shadow)
+}
+.toast.show{opacity:1; transform:translate(-50%,0)}
+.toast.soft{background:var(--card); color:var(--ink); font-weight:600}
+.sheet-bg{position:fixed; inset:0; background:rgba(20,10,30,.4); z-index:60; display:flex; align-items:flex-end; justify-content:center}
+.sheet{background:var(--card); width:100%; max-width:560px; border-radius:28px 28px 0 0; padding:20px 18px calc(24px + env(safe-area-inset-bottom)); max-height:85vh; overflow:auto}
+.cmds{display:grid; grid-template-columns:auto 1fr; gap:6px 14px; font-size:16px}
+.cmds b{white-space:nowrap}
+.linkbtn{background:none; border:none; color:var(--muted); text-decoration:underline; font-weight:700; padding:6px}
+@media (min-width:600px){ h1{font-size:34px} }
+@media (prefers-reduced-motion: reduce){ *{animation:none !important; transition:none !important} }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <button class="icon-btn hidden" id="btn-back" aria-label="Volver" title="Volver">←</button>
+  <div class="brand" id="brand">📚 Mis Lecturas</div>
+  <div class="pill ready hidden" id="status"><span class="dot"></span><span id="status-txt">Listo</span></div>
+  <button class="icon-btn" id="btn-help" aria-label="Comandos de voz" title="Comandos de voz">?</button>
+  <button class="icon-btn" id="btn-theme" aria-label="Cambiar modo claro u oscuro" title="Modo claro / oscuro">🌙</button>
+</header>
+
+<main>
+  <!-- BIENVENIDA -->
+  <section class="screen" id="s-welcome">
+    <div class="hero">
+      <div class="logo"><svg viewBox="0 0 64 64" fill="none"><path d="M10 14c8-3 15-2 22 3v35c-7-5-14-6-22-3V14z" fill="#fff"/><path d="M54 14c-8-3-15-2-22 3v35c7-5 14-6 22-3V14z" fill="#FFF5E1"/><path d="M32 17v35" stroke="#B48CC8" stroke-width="3" stroke-linecap="round"/></svg></div>
+      <h1>Mis Lecturas</h1>
+      <p>Tu compañero de lectura.<br>Dicta tus resúmenes sin soltar el libro.</p>
+      <button class="btn block gbtn" id="btn-login">
+        <svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
+        Ingresar con Google
+      </button>
+      <div style="height:12px"></div>
+      <button class="btn block ghost" id="btn-demo">Probar sin cuenta</button>
+      <p class="note" style="justify-content:center; margin-top:18px">Tus resúmenes se guardan en tu Google Drive, carpeta «Mis Lecturas».</p>
+    </div>
+  </section>
+
+  <!-- MENÚ -->
+  <section class="screen hidden" id="s-menu">
+    <h1 id="hello">¡Hola, lector!</h1>
+    <p class="sub">¿Qué deseas?</p>
+    <button class="big a" id="btn-go-new"><span class="em">🎙️</span><b>REGISTRAR LECTURA</b><span>Dicta un libro nuevo</span></button>
+    <button class="big b" id="btn-go-books"><span class="em">📖</span><b>CONSULTAR Y CONTINUAR</b><span>Tus libros guardados</span></button>
+    <div class="card">
+      <label class="switch"><span><b>Manos libres</b><br><span class="note">Escucho tus órdenes todo el tiempo</span></span><input type="checkbox" id="sw-hands"></label>
+    </div>
+    <div class="card note" id="acct-card"></div>
+  </section>
+
+  <!-- NUEVA LECTURA -->
+  <section class="screen hidden" id="s-new">
+    <h1>Nueva lectura</h1>
+    <p class="sub">Dicta o escribe el título y el autor.</p>
+    <div class="card">
+      <label class="lbl" for="in-title">Título del libro</label>
+      <div class="field"><input id="in-title" autocomplete="off" placeholder="Ej.: Cien años de soledad"><button class="mini-mic" data-field="in-title" aria-label="Dictar título">🎙️</button></div>
+      <label class="lbl" for="in-author">Autor</label>
+      <div class="field"><input id="in-author" autocomplete="off" placeholder="Ej.: Gabriel García Márquez"><button class="mini-mic" data-field="in-author" aria-label="Dictar autor">🎙️</button></div>
+      <button class="btn block pink" id="btn-start">▶ Empezar</button>
+      <p class="note" style="margin:12px 0 0">Revisa que estén bien y di «Empezar».</p>
+    </div>
+  </section>
+
+  <!-- DICTADO -->
+  <section class="screen hidden" id="s-dictate">
+    <h1 id="d-title"></h1>
+    <p class="sub" id="d-author"></p>
+    <div class="card">
+      <div class="sess-head"><span class="tag" id="d-sess"></span><span class="tag sky" id="d-count">0 palabras</span></div>
+      <textarea id="ta-session" placeholder="Pulsa el micrófono o di «Empezar» y dicta tu resumen. También puedes escribir aquí."></textarea>
+      <div class="interim" id="interim"></div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn mint" id="btn-rec">🎙️ Empezar / Grabar</button>
+        <button class="btn cream" id="btn-pause">⏸ Parar</button>
+        <button class="btn sky" id="btn-resume">➕ Seguir agregando</button>
+        <button class="btn ghost" id="btn-fix">✏️ Corregir</button>
+      </div>
+    </div>
+    <div class="card ask">
+      <h2>¿Terminaste?</h2>
+      <div class="row">
+        <button class="btn" id="btn-save" style="background:#fff">💾 Sí, guardar</button>
+        <button class="btn ghost" id="btn-not-yet">No, seguir</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- LISTA DE LIBROS -->
+  <section class="screen hidden" id="s-books">
+    <h1>Mis libros</h1>
+    <p class="sub">Toca uno o di «Abrir» y su título.</p>
+    <div class="row" style="margin-bottom:14px">
+      <button class="btn pink" id="btn-add">➕ Añadir lectura</button>
+      <button class="btn ghost small" id="btn-refresh" style="flex:0 0 auto">↻ Actualizar</button>
+    </div>
+    <input class="search" id="q" type="search" placeholder="Buscar por título o autor" style="width:100%; margin-bottom:14px">
+    <div id="list"></div>
+  </section>
+
+  <!-- DETALLE -->
+  <section class="screen hidden" id="s-book">
+    <h1 id="b-title"></h1>
+    <p class="sub" id="b-meta"></p>
+    <div class="card">
+      <h2>¿Qué hacer?</h2>
+      <div class="actions">
+        <button class="btn sky" id="btn-listen"><span class="em">🔊</span>Escuchar</button>
+        <button class="btn pink" id="btn-edit"><span class="em">✏️</span>Corregir</button>
+        <button class="btn mint" id="btn-word"><span class="em">📄</span>Descargar Word</button>
+        <button class="btn" id="btn-continue"><span class="em">📅</span>Continuar otro día</button>
+      </div>
+    </div>
+    <div class="card player hidden" id="player">
+      <div class="row">
+        <button class="btn sky" id="p-play">⏸ Pausar</button>
+        <button class="btn ghost" id="p-stop">⏹ Detener</button>
+      </div>
+      <div><label class="lbl">Velocidad</label><div class="speeds" id="speeds"></div></div>
+      <div class="note" id="p-now"></div>
+    </div>
+    <div class="card" id="b-sessions"></div>
+    <div class="row sticky-save hidden" id="edit-bar">
+      <button class="btn mint" id="btn-edit-save">💾 Guardar</button>
+      <button class="btn ghost" id="btn-edit-cancel">Cancelar</button>
+    </div>
+  </section>
+</main>
+
+<div class="mic-wrap" id="mic-wrap">
+  <button class="mic" id="mic" aria-label="Micrófono">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><path d="M12 17v4"/><path d="M8 21h8"/></svg>
+  </button>
+  <div class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="mic-label" id="mic-label">Toca para hablar</div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<div class="sheet-bg hidden" id="help">
+  <div class="sheet" role="dialog" aria-label="Comandos de voz">
+    <h2>Comandos de voz 🎙️</h2>
+    <p class="note">Toca el micrófono y di una orden (o activa «Manos libres»).</p>
+    <div class="cmds">
+      <b>«Empezar»</b><span>Comienza a dictar</span>
+      <b>«Parar»</b><span>Pausa el dictado o la lectura</span>
+      <b>«Seguir agregando»</b><span>Reanuda el dictado</span>
+      <b>«Guardar»</b><span>Guarda en tu Drive</span>
+      <b>«Escuchar»</b><span>Lee el resumen en voz alta</span>
+      <b>«Corregir»</b><span>Editar con el teclado</span>
+      <b>«Descargar»</b><span>Descarga en Word</span>
+      <b>«Nueva lectura»</b><span>Registrar otro libro</span>
+      <b>«Mis libros»</b><span>Ver tus libros</span>
+      <b>«Abrir …»</b><span>Abre un libro por su título</span>
+      <b>«Continuar otro día»</b><span>Nueva sesión del libro abierto</span>
+      <b>«Volver»</b><span>Regresa</span>
+    </div>
+    <div style="height:14px"></div>
+    <button class="btn block" id="help-close">Entendido</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+const CFG = Object.assign({ CLIENT_ID:'', LANG:'es-PE', FOLDER_NAME:'Mis Lecturas' }, window.ML_CONFIG || {});
+const SCOPE = 'https://www.googleapis.com/auth/drive.file';
+const DOC_MIME = 'application/vnd.google-apps.document';
+const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const LS = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} },
+  del(k){ try{ localStorage.removeItem(k); }catch(e){} }
+};
+
+/* ---------- Utilidades ---------- */
+const pad = n => String(n).padStart(2, '0');
+const localISO = (d = new Date()) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const fmtDate = s => { const d = new Date(s.length <= 10 ? s + 'T00:00' : s); return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`; };
+const fmtDT = s => { const d = new Date(s); return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const fmtTime = (d = new Date()) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const norm = s => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[¿?¡!.,;:«»"“”()]/g, ' ').replace(/\s+/g, ' ').trim();
+const esc = s => (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const words = s => (s.trim().match(/\S+/g) || []).filter(w => !/^\[\d{1,2}:\d{2}\]$/.test(w)).length;
+const COLORS = ['var(--lav)','var(--pink)','var(--sky)','var(--mint)','var(--cream)'];
+
+/* ---------- Estado ---------- */
+const state = {
+  screen: 'welcome', history: [],
+  mode: LS.get('ml_mode', null),          // 'google' | 'local' | null
+  books: LS.get('ml_books', []),
+  currentId: null, sessionId: null,
+  dict: 'idle',                            // idle | rec | paused
+  newBlock: true, lastAppend: 0,
+  editing: false, handsFree: LS.get('ml_hands', false),
+  token: LS.get('ml_token', null), tokenExp: LS.get('ml_token_exp', 0),
+  folderId: LS.get('ml_folder', null), syncing: false, status: 'ready'
+};
+const persist = () => LS.set('ml_books', state.books);
+const getBook = id => state.books.find(b => b.id === id);
+const curBook = () => getBook(state.currentId);
+const curSession = () => { const b = curBook(); return b && b.sessions.find(s => s.id === state.sessionId); };
+
+/* ---------- Avisos ---------- */
+let toastT;
+function toast(msg, ms = 2600, soft = false){ const t = $('#toast'); t.textContent = msg; t.classList.toggle('soft', soft); t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), ms); }
+function showHeard(msg){ toast(msg, 2200, true); }
+const STATUS = { ready:'Listo', rec:'Grabando', paused:'En pausa', saved:'Guardado', listen:'Te escucho…', offline:'Sin conexión', sync:'Subiendo…', reading:'Leyendo' };
+function setStatus(s){
+  state.status = s; const p = $('#status');
+  p.className = 'pill ' + s; $('#status-txt').textContent = STATUS[s] || s;
+  p.classList.toggle('hidden', state.screen === 'welcome');
+}
+
+/* ---------- Tema ---------- */
+function applyTheme(){
+  const t = LS.get('ml_theme', null);
+  if (t) document.documentElement.setAttribute('data-theme', t); else document.documentElement.removeAttribute('data-theme');
+  const dark = t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  $('#btn-theme').textContent = dark ? '☀️' : '🌙';
+}
+$('#btn-theme').onclick = () => {
+  const dark = document.documentElement.getAttribute('data-theme') ? document.documentElement.getAttribute('data-theme') === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  LS.set('ml_theme', dark ? 'light' : 'dark'); applyTheme();
+};
+
+/* ---------- Navegación ---------- */
+const RENDER = {};
+function show(name, push = true){
+  if (state.screen === 'dictate' && name !== 'dictate' && state.dict === 'rec') pauseDictation(true);
+  if (state.screen === 'book' && name !== 'book') { ttsStop(); state.editing = false; }
+  if (push && state.screen !== name && state.screen !== 'welcome') state.history.push(state.screen);
+  state.screen = name;
+  $$('.screen').forEach(s => s.classList.add('hidden'));
+  $('#s-' + name).classList.remove('hidden');
+  $('#btn-back').classList.toggle('hidden', name === 'welcome' || name === 'menu');
+  $('#mic-wrap').classList.toggle('hidden', name === 'welcome' || (name === 'book' && state.editing));
+  $('#status').classList.toggle('hidden', name === 'welcome');
+  if (RENDER[name]) RENDER[name]();
+  window.scrollTo(0, 0);
+  updateMicUI();
+}
+function back(){
+  if (state.editing) { cancelEdit(); return; }
+  let prev = state.history.pop();
+  while (prev && prev === state.screen) prev = state.history.pop();
+  if (state.screen === 'dictate' && curBook()) { show('book', false); return; }
+  show(prev || 'menu', false);
+}
+$('#btn-back').onclick = back;
+$('#btn-help').onclick = () => $('#help').classList.remove('hidden');
+$('#help-close').onclick = () => $('#help').classList.add('hidden');
+$('#help').onclick = e => { if (e.target.id === 'help') $('#help').classList.add('hidden'); };
+
+/* ---------- Menú ---------- */
+RENDER.menu = () => {
+  $('#sw-hands').checked = state.handsFree;
+  const c = $('#acct-card');
+  if (state.mode === 'google') {
+    const ok = tokenValid();
+    c.innerHTML = ok ? `✅ Conectado a Google Drive · carpeta «${esc(CFG.FOLDER_NAME)}»`
+      : `⚠️ Tu sesión de Google caducó. <button class="btn small sky" id="btn-reconnect">Reconectar</button>`;
+    const pend = state.books.filter(b => b.dirty).length;
+    if (pend) c.innerHTML += `<br>⏳ ${pend} libro(s) por subir`;
+  } else {
+    c.innerHTML = `🧪 Modo prueba: se guarda solo en este celular. <button class="btn small sky" id="btn-reconnect">Ingresar con Google</button>`;
+  }
+  const r = $('#btn-reconnect'); if (r) r.onclick = () => login();
+};
+$('#btn-go-new').onclick = () => goNew();
+$('#btn-go-books').onclick = () => show('books');
+$('#sw-hands').onchange = e => {
+  state.handsFree = e.target.checked; LS.set('ml_hands', state.handsFree);
+  if (state.handsFree) { toast('Manos libres activado: te escucho 👂'); if (state.dict !== 'rec') listen('command'); }
+  else if (state.dict !== 'rec') stopListening();
+};
+
+/* ---------- Nueva lectura ---------- */
+function goNew(){ $('#in-title').value = ''; $('#in-author').value = ''; show('new'); setTimeout(() => $('#in-title').focus(), 300); }
+$$('.mini-mic').forEach(b => b.onclick = () => {
+  const el = $('#' + b.dataset.field);
+  if (voice.purpose === 'field' && voice.want && voice.fieldEl === el) { stopListening(); return; }
+  listen('field', el);
+});
+$('#btn-start').onclick = () => beginSession();
+function beginSession(){
+  const title = $('#in-title').value.trim(), author = $('#in-author').value.trim();
+  if (!title) { toast('Primero dime el título del libro 📖'); $('#in-title').focus(); return; }
+  let b = state.books.find(x => norm(x.title) === norm(title) && norm(x.author) === norm(author));
+  if (b) toast('Ya tenías este libro: abro una nueva sesión 📅');
+  else {
+    b = { id: uid(), title: cap(title), author: author ? cap(author) : '', start: localISO().slice(0, 10), sessions: [], driveId: null, dirty: true, updated: Date.now() };
+    state.books.unshift(b);
+  }
+  state.currentId = b.id;
+  addSessionAndDictate(b, true);
+}
+function addSessionAndDictate(b, fromNew){
+  const s = { id: uid(), date: localISO(), text: '' };
+  b.sessions.push(s); b.dirty = true; b.updated = Date.now(); persist();
+  state.sessionId = s.id;
+  if (fromNew) state.history = ['menu'];
+  show('dictate');
+  startDictation();
+}
+
+/* ---------- Dictado ---------- */
+RENDER.dictate = () => {
+  const b = curBook(), s = curSession(); if (!b || !s) { show('menu', false); return; }
+  $('#d-title').textContent = b.title;
+  $('#d-author').textContent = b.author ? 'de ' + b.author : 'Autor sin indicar';
+  $('#d-sess').textContent = 'Sesión – ' + fmtDT(s.date);
+  $('#ta-session').value = s.text; updateCount(); updateDictButtons();
+};
+function updateCount(){ const s = curSession(); $('#d-count').textContent = (s ? words(s.text) : 0) + ' palabras'; }
+let saveDraftT;
+$('#ta-session').addEventListener('input', e => {
+  const s = curSession(); if (!s) return; s.text = e.target.value; curBook().dirty = true; updateCount();
+  clearTimeout(saveDraftT); saveDraftT = setTimeout(persist, 400);
+});
+function updateDictButtons(){
+  const rec = state.dict === 'rec';
+  $('#btn-rec').disabled = rec; $('#btn-pause').disabled = !rec; $('#btn-resume').disabled = rec || state.dict === 'idle';
+}
+function startDictation(){
+  if (!curSession()) return;
+  ttsStop();
+  state.newBlock = true; state.dict = 'rec'; setStatus('rec'); updateDictButtons();
+  if (!SR) { toast('Este navegador no dicta por voz. Usa Chrome, o el micrófono del teclado ⌨️', 4000); $('#ta-session').focus(); state.dict = 'paused'; setStatus('paused'); updateDictButtons(); return; }
+  listen('dictate');
+}
+function pauseDictation(silent){
+  if (state.dict !== 'rec') return;
+  state.dict = 'paused'; setStatus('paused'); updateDictButtons(); setInterim('');
+  persist();
+  if (state.handsFree) listen('command'); else stopListening();
+  if (!silent) showHeard('En pausa ⏸');
+}
+function appendDictation(t){
+  const s = curSession(); if (!s || !t) return;
+  const now = Date.now();
+  if (state.newBlock || now - state.lastAppend > 120000) {
+    s.text = (s.text.trim() ? s.text.replace(/\s+$/, '') + '\n' : '') + `[${fmtTime()}] ` + cap(t);
+    state.newBlock = false;
+  } else {
+    s.text = s.text.replace(/\s+$/, '') + ' ' + t;
+  }
+  state.lastAppend = now;
+  const b = curBook(); b.dirty = true; b.updated = now; persist();
+  const ta = $('#ta-session');
+  if (state.screen === 'dictate') { ta.value = s.text; ta.scrollTop = ta.scrollHeight; updateCount(); }
+}
+function setInterim(t){ $('#interim').textContent = t ? '… ' + t : ''; }
+$('#btn-rec').onclick = () => startDictation();
+$('#btn-pause').onclick = () => pauseDictation();
+$('#btn-resume').onclick = () => startDictation();
+$('#btn-fix').onclick = () => { pauseDictation(true); const ta = $('#ta-session'); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); toast('Corrige con el teclado y luego guarda ✏️'); };
+$('#btn-not-yet').onclick = () => { if (state.dict !== 'rec') startDictation(); };
+$('#btn-save').onclick = () => saveFromDictation();
+async function saveFromDictation(){
+  pauseDictation(true);
+  const b = curBook(), s = curSession(); if (!b) return;
+  if (s && !s.text.trim()) { b.sessions = b.sessions.filter(x => x.id !== s.id); }
+  if (!b.sessions.length) { toast('Aún no dictaste nada 🙂'); return; }
+  state.dict = 'idle';
+  await saveBook(b);
+  state.history = ['menu', 'books'];
+  show('book', false);
+}
+
+/* ---------- Lista ---------- */
+RENDER.books = () => { renderList(); if (state.mode === 'google') refreshFromDrive(); };
+function renderList(){
+  const q = norm($('#q').value);
+  const items = state.books
+    .filter(b => !q || norm(b.title + ' ' + b.author).includes(q))
+    .sort((a, b) => (b.updated || 0) - (a.updated || 0));
+  const L = $('#list');
+  if (!items.length) {
+    L.innerHTML = `<div class="empty"><div class="em">📚</div><p>${q ? 'No encontré ese libro.' : 'Aún no tienes libros.<br>¡Registra tu primera lectura!'}</p></div>`;
+    return;
+  }
+  L.innerHTML = items.map((b, i) => {
+    const last = b.sessions.length ? b.sessions[b.sessions.length - 1].date : null;
+    const info = b.stub ? 'En tu Drive' : `${b.sessions.length} sesión${b.sessions.length === 1 ? '' : 'es'}${last ? ' · ' + fmtDate(last) : ''}`;
+    const badge = b.dirty ? (state.mode === 'google' ? ' · ⏳ por subir' : ' · 📱 en este celular') : (b.driveId ? ' · ☁️' : '');
+    const color = COLORS[(b.title.charCodeAt(0) || i) % COLORS.length];
+    return `<button class="book" data-id="${b.id}"><div class="cover" style="background:${color}">${esc(b.title.charAt(0).toUpperCase())}</div>
+      <div class="meta"><div class="t">${esc(b.title)}</div><div class="a">${esc(b.author || 'Autor sin indicar')}</div><div class="s">${info}${badge}</div></div></button>`;
+  }).join('');
+  $$('#list .book').forEach(el => el.onclick = () => openBook(el.dataset.id));
+}
+$('#q').addEventListener('input', renderList);
+$('#btn-add').onclick = () => goNew();
+$('#btn-refresh').onclick = () => { if (state.mode === 'google') refreshFromDrive(true); else toast('En modo prueba los libros están en este celular 📱'); };
+function findBookByVoice(q){
+  const n = norm(q).replace(/^(el|la|los|las|libro|el libro)\s+/, '');
+  if (!n) return null;
+  let best = null, score = 0;
+  const qw = n.split(' ');
+  for (const b of state.books) {
+    const t = norm(b.title);
+    if (t === n) return b;
+    let sc = (t.includes(n) || n.includes(t)) ? 0.9 : 0;
+    const tw = t.split(' ');
+    const hits = qw.filter(w => w.length > 2 && tw.includes(w)).length;
+    sc = Math.max(sc, hits / Math.max(tw.length, qw.length));
+    if (sc > score) { score = sc; best = b; }
+  }
+  return score >= 0.4 ? best : null;
+}
+async function openBook(id){
+  state.currentId = id; state.editing = false;
+  show('book');
+  const b = getBook(id);
+  if (b && (b.stub || b.stale) && state.mode === 'google' && navigator.onLine && tokenValid()) {
+    try { await fetchBook(b); if (state.screen === 'book' && state.currentId === id) RENDER.book(); }
+    catch (e) { handleDriveError(e, 'No pude leer el libro desde Drive'); }
+  }
+}
+
+/* ---------- Detalle ---------- */
+RENDER.book = () => {
+  const b = curBook(); if (!b) { show('books', false); return; }
+  $('#b-title').textContent = b.title;
+  $('#b-meta').textContent = (b.author ? b.author + ' · ' : '') + 'Inicio: ' + fmtDate(b.start);
+  $('#player').classList.toggle('hidden', !tts.active);
+  renderSessions();
+  $('#edit-bar').classList.toggle('hidden', !state.editing);
+  $('#mic-wrap').classList.toggle('hidden', state.editing);
+  $('#btn-edit').disabled = state.editing;
+};
+function renderSessions(){
+  const b = curBook(), box = $('#b-sessions');
+  if (b.stub) { box.innerHTML = '<p class="note">Cargando desde tu Drive… ☁️</p>'; return; }
+  if (!b.sessions.length) { box.innerHTML = '<p class="note">Este libro aún no tiene sesiones.</p>'; return; }
+  box.innerHTML = '<h2>Extracto por sesiones</h2>' + b.sessions.map((s, i) => `
+    <div class="session"><h3>Sesión – ${fmtDT(s.date)}</h3>
+    ${state.editing
+      ? `<textarea data-sid="${s.id}" aria-label="Texto de la sesión ${i + 1}">${esc(s.text)}</textarea>`
+      : s.text.split('\n').filter(l => l.trim()).map(l => `<p>${esc(l)}</p>`).join('') || '<p class="note">(vacía)</p>'}
+    </div>`).join('');
+}
+$('#btn-listen').onclick = () => listenBook();
+$('#btn-edit').onclick = () => startEdit();
+$('#btn-word').onclick = () => downloadWord();
+$('#btn-continue').onclick = () => continueOtherDay();
+function startEdit(){
+  const b = curBook(); if (!b || b.stub) return;
+  ttsStop(); state.editing = true; RENDER.book();
+  const t = $('#b-sessions textarea'); if (t) t.focus();
+  toast('Corrige con el teclado y pulsa «Guardar» ✏️');
+}
+function cancelEdit(){ state.editing = false; RENDER.book(); }
+$('#btn-edit-cancel').onclick = cancelEdit;
+$('#btn-edit-save').onclick = () => saveEdit();
+async function saveEdit(){
+  const b = curBook(); if (!b) return;
+  $$('#b-sessions textarea').forEach(t => { const s = b.sessions.find(x => x.id === t.dataset.sid); if (s) s.text = t.value.trim(); });
+  b.sessions = b.sessions.filter(s => s.text);
+  state.editing = false;
+  await saveBook(b); RENDER.book();
+}
+function continueOtherDay(){
+  const b = curBook(); if (!b || b.stub) { toast('Espera a que cargue el libro ☁️'); return; }
+  addSessionAndDictate(b, false);
+  showHeard('Nueva sesión: ' + fmtDT(curSession().date));
+}
+
+/* ---------- Guardado y sincronización ---------- */
+async function saveBook(b){
+  b.dirty = true; b.updated = Date.now(); persist();
+  if (state.mode !== 'google') { setStatus('saved'); toast('¡Listo! Tu resumen quedó guardado en este celular 📚'); speak('Listo, guardado'); return; }
+  if (!navigator.onLine) { setStatus('offline'); toast('Sin conexión: lo guardé en el celular y lo subiré al volver la señal 📶', 3500); return; }
+  if (!tokenValid()) { setStatus('paused'); toast('Guardado en el celular. Reconecta Google para subirlo ☁️', 3500); askReconnect(); return; }
+  try {
+    setStatus('sync'); await uploadBook(b);
+    setStatus('saved'); toast('¡Listo! Tu resumen quedó guardado 📚'); speak('Listo, guardado');
+  } catch (e) { handleDriveError(e, 'No pude subirlo ahora; quedó guardado en el celular'); }
+}
+async function syncAll(){
+  if (state.mode !== 'google' || state.syncing || !navigator.onLine || !tokenValid()) return;
+  const pend = state.books.filter(b => b.dirty && b.sessions.length && !b.stub);
+  if (!pend.length) return;
+  state.syncing = true; setStatus('sync');
+  try { for (const b of pend) await uploadBook(b); setStatus('saved'); toast(`☁️ Sincronizado: ${pend.length} libro(s)`); if (state.screen === 'books') renderList(); }
+  catch (e) { handleDriveError(e, 'La sincronización quedó pendiente'); }
+  finally { state.syncing = false; }
+}
+window.addEventListener('online', () => { if (state.status === 'offline') setStatus('ready'); toast('Volvió la conexión 📶'); syncAll(); });
+window.addEventListener('offline', () => setStatus('offline'));
+function handleDriveError(e, msg){
+  console.warn(e);
+  if (e && e.auth) { toast('Tu sesión de Google caducó. Toca «Reconectar» ☁️', 3500); askReconnect(); setStatus('paused'); return; }
+  if (!navigator.onLine) { setStatus('offline'); return; }
+  setStatus('paused'); toast(msg + ' 🙏', 3500);
+}
+function askReconnect(){ if (state.screen === 'menu') RENDER.menu(); }
+
+/* ---------- Google: sesión ---------- */
+const hasClientId = () => CFG.CLIENT_ID && !/PEGAR|TU_CLIENT/i.test(CFG.CLIENT_ID);
+const tokenValid = () => !!state.token && Date.now() < state.tokenExp - 60000;
+function loadGis(){
+  return new Promise((res, rej) => {
+    if (window.google && google.accounts && google.accounts.oauth2) return res();
+    const s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.async = true;
+    s.onload = () => res(); s.onerror = () => rej(new Error('No se pudo cargar Google'));
+    document.head.appendChild(s);
+  });
+}
+async function login(){
+  if (!hasClientId()) { toast('Falta configurar Google en config.js. Puedes «Probar sin cuenta» 🧪', 4000); return; }
+  if (!navigator.onLine) { toast('Necesitas conexión para ingresar 📶'); return; }
+  try {
+    await loadGis();
+    await new Promise((resolve, reject) => {
+      const tc = google.accounts.oauth2.initTokenClient({
+        client_id: CFG.CLIENT_ID, scope: SCOPE,
+        callback: r => {
+          if (r.error) return reject(r);
+          if (!google.accounts.oauth2.hasGrantedAllScopes(r, SCOPE)) return reject({ error: 'scope' });
+          state.token = r.access_token; state.tokenExp = Date.now() + (Number(r.expires_in) || 3600) * 1000;
+          LS.set('ml_token', state.token); LS.set('ml_token_exp', state.tokenExp);
+          resolve();
+        },
+        error_callback: e => reject(e)
+      });
+      tc.requestAccessToken({ prompt: state.mode === 'google' ? '' : 'consent' });
+    });
+    state.mode = 'google'; LS.set('ml_mode', 'google');
+    toast('¡Bienvenido! Conectado a tu Google Drive ☁️');
+    if (state.screen === 'welcome') { state.history = []; show('menu', false); } else if (state.screen === 'menu') RENDER.menu();
+    await ensureFolder();
+    await syncAll();
+  } catch (e) {
+    console.warn(e);
+    toast(e && e.error === 'scope' ? 'Necesito permiso para guardar en tu Drive. Vuelve a intentarlo 🙏' : 'No se completó el ingreso con Google 🙏', 3500);
+  }
+}
+$('#btn-login').onclick = () => login();
+$('#btn-demo').onclick = () => { state.mode = 'local'; LS.set('ml_mode', 'local'); state.history = []; show('menu', false); toast('Modo prueba: todo se guarda en este celular 🧪'); };
+
+/* ---------- Google Drive (REST v3) ---------- */
+async function gfetch(url, opts = {}){
+  if (!tokenValid()) { const e = new Error('auth'); e.auth = true; throw e; }
+  const r = await fetch(url, Object.assign({}, opts, { headers: Object.assign({}, opts.headers || {}, { Authorization: 'Bearer ' + state.token }) }));
+  if (r.status === 401) { state.token = null; LS.del('ml_token'); const e = new Error('auth'); e.auth = true; throw e; }
+  if (!r.ok) throw new Error('Drive ' + r.status + ': ' + (await r.text()).slice(0, 300));
+  return r;
+}
+const DRIVE = 'https://www.googleapis.com/drive/v3/files';
+async function ensureFolder(){
+  if (state.folderId) {
+    try { const r = await gfetch(`${DRIVE}/${state.folderId}?fields=id,trashed`); const j = await r.json(); if (!j.trashed) return state.folderId; } catch (e) { if (e.auth) throw e; }
+  }
+  const q = encodeURIComponent(`mimeType='application/vnd.google-apps.folder' and name='${CFG.FOLDER_NAME.replace(/'/g, "\\'")}' and trashed=false`);
+  const r = await gfetch(`${DRIVE}?q=${q}&fields=files(id)&spaces=drive`);
+  const j = await r.json();
+  if (j.files && j.files.length) state.folderId = j.files[0].id;
+  else {
+    const c = await gfetch(DRIVE + '?fields=id', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: CFG.FOLDER_NAME, mimeType: 'application/vnd.google-apps.folder' }) });
+    state.folderId = (await c.json()).id;
+  }
+  LS.set('ml_folder', state.folderId);
+  return state.folderId;
+}
+const docName = b => b.author ? `${b.title} — ${b.author}` : b.title;
+function bookHtml(b){
+  const ps = t => t.split('\n').filter(l => l.trim()).map(l => `<p>${esc(l)}</p>`).join('');
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(b.title)}</title></head><body>
+<h1>${esc(b.title)}</h1>
+<p><b>Autor:</b> ${esc(b.author || 'Sin indicar')}</p>
+<p><b>Fecha de inicio:</b> ${fmtDate(b.start)}</p>
+${b.sessions.map(s => `<h2>Sesión – ${fmtDT(s.date)}</h2>${ps(s.text)}`).join('\n')}
+</body></html>`;
+}
+async function uploadBook(b){
+  await ensureFolder();
+  const meta = { name: docName(b), mimeType: DOC_MIME, appProperties: { app: 'mislecturas' } };
+  if (!b.driveId) meta.parents = [state.folderId];
+  const bd = 'mislecturas' + uid();
+  const body = `--${bd}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n--${bd}\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n${bookHtml(b)}\r\n--${bd}--`;
+  const url = 'https://www.googleapis.com/upload/drive/v3/files' + (b.driveId ? '/' + b.driveId : '') + '?uploadType=multipart&fields=id,modifiedTime';
+  const r = await gfetch(url, { method: b.driveId ? 'PATCH' : 'POST', headers: { 'Content-Type': 'multipart/related; boundary=' + bd }, body });
+  const j = await r.json();
+  b.driveId = j.id; b.remoteModified = j.modifiedTime; b.dirty = false; b.stale = false; persist();
+}
+async function refreshFromDrive(manual){
+  if (!navigator.onLine) { if (manual) toast('Sin conexión 📶'); return; }
+  if (!tokenValid()) { if (manual) { toast('Reconecta Google para actualizar ☁️'); login(); } return; }
+  try {
+    await ensureFolder();
+    const q = encodeURIComponent(`'${state.folderId}' in parents and trashed=false and mimeType='${DOC_MIME}'`);
+    const r = await gfetch(`${DRIVE}?q=${q}&fields=files(id,name,modifiedTime)&pageSize=500&orderBy=modifiedTime desc`);
+    const files = (await r.json()).files || [];
+    const ids = new Set(files.map(f => f.id));
+    for (const f of files) {
+      let b = state.books.find(x => x.driveId === f.id);
+      const [t, ...a] = f.name.split(' — ');
+      if (!b) {
+        b = { id: uid(), title: t, author: a.join(' — '), start: f.modifiedTime.slice(0, 10), sessions: [], driveId: f.id, dirty: false, stub: true, remoteModified: f.modifiedTime, updated: Date.parse(f.modifiedTime) };
+        state.books.push(b);
+      } else if (!b.dirty && b.remoteModified !== f.modifiedTime) { b.stale = true; b.remoteModified = f.modifiedTime; }
+    }
+    state.books = state.books.filter(b => !b.driveId || b.dirty || ids.has(b.driveId));
+    persist();
+    if (state.screen === 'books') renderList();
+    if (manual) toast('Lista actualizada ☁️');
+    syncAll();
+  } catch (e) { handleDriveError(e, 'No pude leer tu carpeta de Drive'); }
+}
+function parseDocText(txt, b){
+  const lines = txt.replace(/^﻿/, '').replace(/\r/g, '').split('\n').map(l => l.trim());
+  const re = /^Sesi[oó]n\s*[–—-]\s*(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})/i;
+  let i = 0; while (i < lines.length && !lines[i]) i++;
+  const title = lines[i] || b.title; i++;
+  let author = b.author, start = b.start; const sessions = []; let cur = null;
+  for (; i < lines.length; i++) {
+    const l = lines[i]; if (!l) continue;
+    let m;
+    if (!cur && /^Autor:/i.test(l)) { author = l.replace(/^Autor:\s*/i, ''); if (author === 'Sin indicar') author = ''; continue; }
+    if (!cur && /^Fecha de inicio:/i.test(l)) { const d = l.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/); if (d) start = `${d[3]}-${pad(d[2])}-${pad(d[1])}`; continue; }
+    if ((m = l.match(re))) { cur = { id: uid(), date: `${m[3]}-${pad(m[2])}-${pad(m[1])}T${pad(m[4])}:${m[5]}`, text: '' }; sessions.push(cur); continue; }
+    if (!cur) { cur = { id: uid(), date: start + 'T00:00', text: '' }; sessions.push(cur); }
+    cur.text += (cur.text ? '\n' : '') + l;
+  }
+  Object.assign(b, { title, author, start, sessions, stub: false, stale: false });
+}
+async function fetchBook(b){
+  const r = await gfetch(`${DRIVE}/${b.driveId}/export?mimeType=text/plain`);
+  parseDocText(await r.text(), b); persist();
+}
+async function downloadWord(){
+  const b = curBook(); if (!b || b.stub) { toast('Espera a que cargue el libro ☁️'); return; }
+  const fname = (b.title.replace(/[\\/:*?"<>|]/g, '').slice(0, 80) || 'lectura');
+  if (state.mode === 'google' && navigator.onLine && tokenValid()) {
+    try {
+      if (b.dirty || !b.driveId) await uploadBook(b);
+      toast('Preparando tu Word… 📄');
+      const r = await gfetch(`${DRIVE}/${b.driveId}/export?mimeType=${encodeURIComponent(DOCX_MIME)}`);
+      saveBlob(await r.blob(), fname + '.docx'); speak('Descargado'); return;
+    } catch (e) { handleDriveError(e, 'No pude exportarlo desde Drive; te doy una copia local'); }
+  }
+  // Copia local compatible con Word (sin conexión o en modo prueba)
+  saveBlob(new Blob(['﻿' + bookHtml(b)], { type: 'application/msword' }), fname + '.doc');
+  toast('Descargado 📄');
+}
+function saveBlob(blob, name){
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+}
+
+/* ---------- Voz: síntesis ---------- */
+const tts = { chunks: [], idx: 0, active: false, playing: false, rate: LS.get('ml_rate', 1), gen: 0 };
+let voices = [];
+function loadVoices(){ voices = 'speechSynthesis' in window ? speechSynthesis.getVoices() : []; }
+if ('speechSynthesis' in window) { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+function pickVoice(){
+  const L = CFG.LANG.toLowerCase();
+  const n = v => v.lang.toLowerCase().replace('_', '-');
+  return voices.find(v => n(v) === L) || voices.find(v => /^es-(419|us|mx|co|ar|cl|pe)/.test(n(v))) || voices.find(v => n(v).startsWith('es')) || null;
+}
+function utter(text, rate){
+  const u = new SpeechSynthesisUtterance(text); u.lang = CFG.LANG; u.rate = rate || 1;
+  const v = pickVoice(); if (v) u.voice = v; return u;
+}
+function beginSpeaking(){ voice.speaking = true; if (voice.rec && voice.running) { try { voice.rec.abort(); } catch (e) {} } }
+function endSpeaking(){
+  setTimeout(() => {
+    voice.speaking = false;
+    if (voice.want && !voice.running && voice.rec) { try { voice.rec.start(); } catch (e) {} }
+  }, 350);
+}
+function speak(text){
+  if (!('speechSynthesis' in window) || tts.playing) return;
+  beginSpeaking();
+  const u = utter(text, 1.05); u.onend = u.onerror = endSpeaking;
+  speechSynthesis.cancel(); speechSynthesis.speak(u);
+}
+function splitChunks(text){
+  const out = [];
+  text.split('\n').forEach(par => {
+    const sent = par.match(/[^.!?;]+[.!?;]*/g) || [];
+    let buf = '';
+    sent.forEach(s => { if ((buf + s).length > 180 && buf) { out.push(buf.trim()); buf = ''; } buf += s; });
+    if (buf.trim()) out.push(buf.trim());
+  });
+  return out.filter(Boolean);
+}
+function listenBook(){
+  const b = curBook(); if (!b || b.stub) { toast('Espera a que cargue el libro ☁️'); return; }
+  if (!('speechSynthesis' in window)) { toast('Este navegador no puede leer en voz alta 🙏'); return; }
+  if (state.editing) cancelEdit();
+  let txt = `${b.title}. ${b.author ? 'De ' + b.author + '.' : ''}\n`;
+  b.sessions.forEach(s => { txt += `Sesión del ${fmtDate(s.date)}.\n` + s.text.replace(/\[\d{1,2}:\d{2}\]\s*/g, '') + '\n'; });
+  tts.chunks = splitChunks(txt); tts.idx = 0; tts.active = true;
+  $('#player').classList.remove('hidden'); renderSpeeds();
+  ttsPlay();
+}
+function ttsPlay(){
+  if (!tts.chunks.length) return;
+  stopListening(); state.dict === 'rec' && pauseDictation(true);
+  tts.playing = true; voice.speaking = true; setStatus('reading');
+  const gen = ++tts.gen;
+  speechSynthesis.cancel();
+  const next = () => {
+    if (gen !== tts.gen || !tts.playing) return;
+    if (tts.idx >= tts.chunks.length) { ttsStop(); toast('Fin de la lectura 📖'); return; }
+    $('#p-now').textContent = `Parte ${tts.idx + 1} de ${tts.chunks.length}`;
+    const u = utter(tts.chunks[tts.idx], tts.rate);
+    u.onend = () => { if (gen !== tts.gen) return; tts.idx++; next(); };
+    u.onerror = () => { if (gen !== tts.gen) return; tts.idx++; next(); };
+    speechSynthesis.speak(u);
+  };
+  next(); updatePlayer();
+}
+function ttsPause(){ if (!tts.playing) return; tts.playing = false; tts.gen++; speechSynthesis.cancel(); voice.speaking = false; setStatus('paused'); updatePlayer(); }
+function ttsStop(){
+  if (!tts.active && !tts.playing) return;
+  tts.playing = false; tts.active = false; tts.gen++;
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+  voice.speaking = false; $('#player').classList.add('hidden'); setStatus('ready'); updatePlayer();
+  if (state.handsFree && state.dict !== 'rec') listen('command');
+}
+function updatePlayer(){ $('#p-play').textContent = tts.playing ? '⏸ Pausar' : '▶ Reproducir'; updateMicUI(); }
+function renderSpeeds(){
+  $('#speeds').innerHTML = [0.75, 1, 1.25, 1.5, 2].map(r => `<button class="chip ${r === tts.rate ? 'on' : ''}" data-r="${r}">${String(r).replace('.', ',')}×</button>`).join('');
+  $$('#speeds .chip').forEach(c => c.onclick = () => { tts.rate = Number(c.dataset.r); LS.set('ml_rate', tts.rate); renderSpeeds(); if (tts.playing) ttsPlay(); });
+}
+$('#p-play').onclick = () => tts.playing ? ttsPause() : ttsPlay();
+$('#p-stop').onclick = () => ttsStop();
+
+/* ---------- Voz: reconocimiento ---------- */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const isAndroid = /Android/i.test(navigator.userAgent);
+const voice = { rec: null, want: false, purpose: null, fieldEl: null, running: false, speaking: false };
+function ensureRec(){
+  if (!SR) return null; if (voice.rec) return voice.rec;
+  const r = new SR(); r.lang = CFG.LANG; r.interimResults = true; r.maxAlternatives = 1;
+  r.onstart = () => { voice.running = true; updateMicUI(); };
+  r.onresult = onRecResult;
+  r.onerror = e => {
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { voice.want = false; toast('Necesito permiso para usar el micrófono 🎙️', 3500); if (state.dict === 'rec') pauseDictation(true); }
+    else if (e.error === 'network') { toast('El dictado necesita internet. Puedes escribir con el teclado ⌨️', 3500); voice.want = false; if (state.dict === 'rec') pauseDictation(true); }
+  };
+  r.onend = () => {
+    voice.running = false;
+    if (voice.want && !voice.speaking) {
+      r.continuous = voice.purpose === 'dictate' && !isAndroid;
+      setTimeout(() => { if (voice.want && !voice.running && !voice.speaking) { try { r.start(); } catch (e) {} } }, 120);
+    }
+    updateMicUI();
+  };
+  voice.rec = r; return r;
+}
+function listen(purpose, fieldEl){
+  if (!SR) { if (purpose !== 'command' || !state.handsFree) toast('Tu navegador no permite dictar. Usa Google Chrome 🙏', 3500); return; }
+  if (tts.playing && purpose !== 'command') ttsPause();
+  voice.purpose = purpose; voice.fieldEl = fieldEl || null; voice.want = true;
+  const r = ensureRec();
+  if (voice.running) { try { r.stop(); } catch (e) {} }   // onend reinicia con la configuración nueva
+  else { r.continuous = purpose === 'dictate' && !isAndroid; try { r.start(); } catch (e) {} }
+  updateMicUI();
+}
+function stopListening(){
+  voice.want = false; setInterim('');
+  if (voice.rec && voice.running) { try { voice.rec.stop(); } catch (e) {} }
+  updateMicUI();
+}
+function onRecResult(e){
+  if (voice.speaking) return;
+  let interim = ''; const finals = [];
+  for (let i = e.resultIndex; i < e.results.length; i++) {
+    const res = e.results[i];
+    if (res.isFinal) finals.push(res[0].transcript); else interim += res[0].transcript;
+  }
+  if (voice.purpose === 'dictate') setInterim(interim);
+  else if (interim) showHeard('🎧 ' + interim);
+  finals.forEach(t => handleFinal(t.trim()));
+}
+function handleFinal(t){
+  if (!t) return;
+  if (voice.purpose === 'field') {
+    const el = voice.fieldEl; voice.want = false; stopListening();
+    if (el) { el.value = cap(t.replace(/[.。]+$/, '')); el.dispatchEvent(new Event('input')); }
+    showHeard('¿Está bien? Puedes corregirlo con el teclado');
+    return;
+  }
+  if (voice.purpose === 'dictate') {
+    const cmd = parseCommand(t);
+    if (cmd) { setInterim(''); runCommand(cmd); return; }
+    const m = norm(t).match(/^(.*\S)\s+(parar|guardar)$/);
+    if (m) { appendDictation(t.replace(/\s*\S+[.!]?\s*$/, '')); setInterim(''); runCommand({ c: m[2] === 'parar' ? 'stop' : 'save' }); return; }
+    appendDictation(t); setInterim(''); return;
+  }
+  // órdenes
+  const cmd = parseCommand(t);
+  if (!state.handsFree) voice.want = false;
+  if (cmd) { showHeard('✔ «' + t + '»'); runCommand(cmd); }
+  else showHeard('No entendí «' + t + '». Di «ayuda» para ver las órdenes');
+}
+function parseCommand(t){
+  let n = norm(t).replace(/^(ok|oye|por favor|ya)\s+/, '').replace(/\s+(por favor|ya)$/, '');
+  const m = n.match(/^(abrir|abre|abreme|ver|mostrar)\s+(el libro\s+|libro\s+)?(.+)$/);
+  if (m && !/^(mis libros|libros)$/.test(m[3])) return { c: 'open', q: m[3] };
+  const map = [
+    ['start', /^(empezar|empieza|empiezo|comenzar|comienza|grabar|graba|iniciar|inicia|dictar)$/],
+    ['stop', /^(parar|para|pausa|pausar|detener|detente|alto|stop|deten)$/],
+    ['resume', /^(seguir agregando|sigue agregando|seguir|sigue|reanudar|continuar|continua|agregar mas)$/],
+    ['save', /^(guardar|guarda|guardalo|termine|ya termine|si guardar|si termine|listo guardar)$/],
+    ['listen', /^(escuchar|escucha|leer|lee|leelo|reproducir)$/],
+    ['edit', /^(corregir|corrige|editar|edita)$/],
+    ['download', /^(descargar|descarga|descargar word|descarga word|bajar word)$/],
+    ['new', /^(nueva lectura|anadir lectura|agregar lectura|registrar lectura|nuevo libro|anadir libro)$/],
+    ['books', /^(mis libros|libros|consultar|consultar y continuar|biblioteca|ver libros)$/],
+    ['continue', /^(continuar otro dia|nueva sesion|otro dia)$/],
+    ['back', /^(volver|vuelve|atras|regresar|regresa|menu|inicio)$/],
+    ['help', /^(ayuda|comandos|que puedo decir)$/]
+  ];
+  for (const [c, re] of map) if (re.test(n)) return { c };
+  return null;
+}
+function runCommand(cmd){
+  const sc = state.screen;
+  switch (cmd.c) {
+    case 'start':
+      if (sc === 'new') beginSession();
+      else if (sc === 'dictate') startDictation();
+      else if (sc === 'book') continueOtherDay();
+      else goNew();
+      break;
+    case 'stop':
+      if (sc === 'dictate') pauseDictation(); else if (tts.playing) ttsPause(); else stopListening();
+      break;
+    case 'resume':
+      if (sc === 'dictate') startDictation(); else if (sc === 'book') { if (tts.active && !tts.playing) ttsPlay(); else continueOtherDay(); }
+      break;
+    case 'save':
+      if (sc === 'dictate') saveFromDictation(); else if (sc === 'book' && state.editing) saveEdit(); else toast('No hay nada nuevo que guardar 🙂');
+      break;
+    case 'listen':
+      if (sc === 'book') listenBook();
+      else if (sc === 'dictate') { pauseDictation(true); const s = curSession(); if (s && s.text.trim()) { tts.chunks = splitChunks(s.text.replace(/\[\d{1,2}:\d{2}\]\s*/g, '')); tts.idx = 0; tts.active = true; ttsPlay(); } }
+      else toast('Abre un libro para escucharlo 📖');
+      break;
+    case 'edit':
+      if (sc === 'book') startEdit(); else if (sc === 'dictate') $('#btn-fix').click(); else toast('Abre un libro para corregirlo ✏️');
+      break;
+    case 'download':
+      if (sc === 'book') downloadWord(); else toast('Abre un libro para descargarlo 📄');
+      break;
+    case 'continue':
+      if (sc === 'book') continueOtherDay(); else toast('Primero abre el libro 📖');
+      break;
+    case 'new': goNew(); break;
+    case 'books': show('books'); break;
+    case 'back': back(); break;
+    case 'help': $('#help').classList.remove('hidden'); break;
+    case 'open': {
+      const b = findBookByVoice(cmd.q);
+      if (b) { openBook(b.id); speak('Abriendo ' + b.title); } else { toast('No encontré «' + cmd.q + '» 🔎'); if (sc !== 'books') show('books'); }
+      break;
+    }
+  }
+}
+function updateMicUI(){
+  const mic = $('#mic'), wrap = $('#mic-wrap'), lbl = $('#mic-label');
+  const rec = state.dict === 'rec' && voice.want && voice.purpose === 'dictate';
+  const listening = voice.want && voice.purpose !== 'dictate';
+  mic.classList.toggle('rec', rec); wrap.classList.toggle('rec', rec);
+  mic.classList.toggle('listen', listening && !rec);
+  if (tts.playing) lbl.textContent = 'Toca para pausar la lectura';
+  else if (rec) lbl.textContent = 'Grabando · toca para parar';
+  else if (listening) lbl.textContent = voice.purpose === 'field' ? 'Dicta ahora…' : 'Te escucho…';
+  else if (state.screen === 'dictate') lbl.textContent = state.dict === 'paused' ? 'En pausa · toca para seguir' : 'Toca para grabar';
+  else lbl.textContent = 'Toca y di una orden';
+  $$('.mini-mic').forEach(b => b.classList.toggle('on', voice.want && voice.purpose === 'field' && voice.fieldEl && voice.fieldEl.id === b.dataset.field));
+  if (listening && state.status !== 'listen' && !rec && state.screen !== 'dictate') setStatus('listen');
+  else if (!listening && state.status === 'listen') setStatus('ready');
+}
+$('#mic').onclick = () => {
+  if (tts.playing) { ttsPause(); return; }
+  if (state.screen === 'dictate') { state.dict === 'rec' ? pauseDictation() : startDictation(); return; }
+  if (voice.want) { stopListening(); if (state.handsFree) { state.handsFree = false; LS.set('ml_hands', false); toast('Manos libres desactivado'); } return; }
+  listen('command');
+};
+
+/* ---------- Arranque ---------- */
+applyTheme();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+if (state.mode) { show('menu', false); setStatus(navigator.onLine ? 'ready' : 'offline'); if (state.handsFree) setTimeout(() => listen('command'), 600); syncAll(); }
+else show('welcome', false);
+if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
+
+// Ganchos para pruebas automáticas
+window.ML = { state, handleFinal, appendDictation, runCommand, parseCommand, findBookByVoice, parseDocText, bookHtml, voice, show };
+</script>
+</body>
+</html>
