@@ -29,6 +29,22 @@ Toca el micrófono y di la orden (o activa **Manos libres** en el menú). Cada o
 
 Truco: al dictar, puedes terminar una frase con «… parar» o «… guardar».
 
+## Puntuación al dictar
+| Di… | Escribe |
+|---|---|
+| «punto y seguido» | `.` y sigue en la misma línea |
+| «punto final» o «punto y aparte» | `.` y pasa a la línea siguiente |
+| «nueva línea» / «pasa a la siguiente línea» | salto de línea |
+| «coma» · «dos puntos» · «punto y coma» | `,` · `:` · `;` |
+| «puntos suspensivos» | `…` |
+| «abre pregunta» … «cierra pregunta» | `¿ … ?` |
+| «signo de interrogación» | `¿` la primera vez y `?` la segunda |
+| «abre exclamación» … «cierra exclamación» | `¡ … !` |
+| «abre comillas» / «cierra comillas» | `« … »` |
+| «abre paréntesis» / «cierra paréntesis» | `( … )` |
+
+Después de un punto, la siguiente palabra empieza con mayúscula. «punto» suelto solo se convierte en signo al final de la frase, para no estropear expresiones como «el punto de vista».
+
 ## Formato del Google Doc
 - Título (Título 1), «Autor:», «Fecha de inicio:».
 - Cada sesión con subtítulo **«Sesión – dd/mm/aaaa hh:mm»** (Título 2) y cada bloque dictado marcado con su hora `[hh:mm]`.

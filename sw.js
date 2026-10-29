@@ -1,5 +1,5 @@
 // Service worker de «Mis Lecturas»: guarda la app para abrirla sin conexión.
-const CACHE = 'mis-lecturas-v1';
+const CACHE = 'mis-lecturas-v2';
 const SHELL = ['./', './index.html', './config.js', './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', e => {

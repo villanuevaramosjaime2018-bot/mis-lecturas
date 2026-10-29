@@ -195,8 +195,8 @@ textarea{
 .toast.soft{background:var(--card); color:var(--ink); font-weight:600}
 .sheet-bg{position:fixed; inset:0; background:rgba(20,10,30,.4); z-index:60; display:flex; align-items:flex-end; justify-content:center}
 .sheet{background:var(--card); width:100%; max-width:560px; border-radius:28px 28px 0 0; padding:20px 18px calc(24px + env(safe-area-inset-bottom)); max-height:85vh; overflow:auto}
-.cmds{display:grid; grid-template-columns:auto 1fr; gap:6px 14px; font-size:16px}
-.cmds b{white-space:nowrap}
+.cmds{display:grid; grid-template-columns:minmax(0,1.2fr) minmax(0,1fr); gap:8px 14px; font-size:16px}
+.cmds b{overflow-wrap:anywhere}
 .linkbtn{background:none; border:none; color:var(--muted); text-decoration:underline; font-weight:700; padding:6px}
 @media (min-width:600px){ h1{font-size:34px} }
 @media (prefers-reduced-motion: reduce){ *{animation:none !important; transition:none !important} }
@@ -346,6 +346,22 @@ textarea{
       <b>«Continuar otro día»</b><span>Nueva sesión del libro abierto</span>
       <b>«Volver»</b><span>Regresa</span>
     </div>
+    <h2 style="margin-top:18px">Puntuación al dictar ✍️</h2>
+    <div class="cmds">
+      <b>«punto y seguido»</b><span>.  y sigue en la misma línea</span>
+      <b>«punto final» / «punto y aparte»</b><span>.  y pasa a la línea siguiente</span>
+      <b>«nueva línea»</b><span>Pasa a la línea siguiente</span>
+      <b>«coma»</b><span>,</span>
+      <b>«dos puntos»</b><span>:</span>
+      <b>«punto y coma»</b><span>;</span>
+      <b>«puntos suspensivos»</b><span>…</span>
+      <b>«abre pregunta» … «cierra pregunta»</b><span>¿ … ?</span>
+      <b>«signo de interrogación»</b><span>¿ la 1.ª vez, ? la 2.ª</span>
+      <b>«abre exclamación» … «cierra exclamación»</b><span>¡ … !</span>
+      <b>«abre comillas» / «cierra comillas»</b><span>« … »</span>
+      <b>«abre paréntesis» / «cierra paréntesis»</b><span>( … )</span>
+    </div>
+    <p class="note">Después de un punto, la siguiente palabra empieza con mayúscula.</p>
     <div style="height:14px"></div>
     <button class="btn block" id="help-close">Entendido</button>
   </div>
@@ -530,21 +546,92 @@ function pauseDictation(silent){
   if (state.handsFree) listen('command'); else stopListening();
   if (!silent) showHeard('En pausa ⏸');
 }
+/* ---------- Puntuación por voz ---------- */
+// Frases habladas → signos. Se buscan las más largas primero.
+const PB = '(?<![\\p{L}\\d])', PE = '(?![\\p{L}\\d])';
+const pr = s => new RegExp(PB + '(?:' + s + ')' + PE, 'giu');
+const L = 'l[ií]nea', INT = '(?:interrogaci[oó]n|pregunta)', EXC = '(?:exclamaci[oó]n|admiraci[oó]n)';
+const OPEN = '(?:abr[ea]|abrir|abro|inicio\\s+de|empieza)', CLOSE = '(?:cierr[ae]|cerrar|cierro|fin\\s+de|termina)';
+const SPOKEN = [
+  [pr('punto\\s+y\\s+aparte|punto\\s+aparte|punto\\s+final'), ' .\n'],
+  [pr('punto\\s+y\\s+seguido|punto\\s+seguido'), ' . '],
+  [pr('puntos\\s+suspensivos'), ' … '],
+  [pr('punto\\s+y\\s+coma'), ' ; '],
+  [pr('dos\\s+puntos'), ' : '],
+  [pr('(?:nueva|siguiente|otra)\\s+' + L + '|(?:pasa|pasar|baja|bajar|ir)\\s+a\\s+(?:la\\s+)?(?:siguiente|otra)\\s+' + L + '|nuevo\\s+p[aá]rrafo|salto\\s+de\\s+' + L), '\n'],
+  [pr(OPEN + '\\s+(?:(?:el\\s+)?signo\\s+de\\s+)?' + INT), ' ¿'],
+  [pr(CLOSE + '\\s+(?:(?:el\\s+)?signo\\s+de\\s+)?' + INT), '? '],
+  [pr('signos?\\s+de\\s+' + INT), ' \u0001 '],
+  [pr(OPEN + '\\s+(?:(?:el\\s+)?signo\\s+de\\s+)?' + EXC), ' ¡'],
+  [pr(CLOSE + '\\s+(?:(?:el\\s+)?signo\\s+de\\s+)?' + EXC), '! '],
+  [pr('signos?\\s+de\\s+' + EXC), ' \u0002 '],
+  [pr(OPEN + '\\s+comillas'), ' «'],
+  [pr(CLOSE + '\\s+comillas'), '» '],
+  [pr(OPEN + '\\s+par[eé]ntesis'), ' ('],
+  [pr(CLOSE + '\\s+par[eé]ntesis'), ') '],
+  [pr('coma'), ' , '],
+  [/(?<![\p{L}\d])punto\s*$/iu, ' .']        // «punto» suelto, solo al final de la frase
+];
+function spokenPunct(t){
+  let s = ' ' + t + ' ';
+  for (const [re, rep] of SPOKEN) s = s.replace(re, rep);
+  return s;
+}
+// ¿Hay un «¿» (o «¡») abierto en la oración actual?
+function isOpen(text, open, close){
+  const lastEnd = Math.max(text.lastIndexOf('.'), text.lastIndexOf('\n'), text.lastIndexOf(close));
+  return text.lastIndexOf(open) > lastEnd;
+}
+const endsSentence = txt => { const t = txt.replace(/[ \t]+$/, '').replace(/[¿¡«(]+$/, ''); return !t || /[.?!…\n]$/.test(t) || /\[\d{1,2}:\d{2}\]$/.test(t); };
+// Une un trozo dictado al texto previo con espacios y mayúsculas correctos.
+function joinDictation(prev, raw){
+  let s = spokenPunct(raw);
+  // Resolver «signo de interrogación / exclamación»: abre si no hay uno abierto, si no cierra.
+  let ctx = prev, out = '';
+  for (const ch of s) {
+    let c = ch;
+    if (ch === '\u0001') c = isOpen(ctx + out, '¿', '?') ? '?' : '¿';
+    if (ch === '\u0002') c = isOpen(ctx + out, '¡', '!') ? '!' : '¡';
+    out += c;
+  }
+  s = out
+    .replace(/[ \t]+/g, ' ')
+    .replace(/ ?\n ?/g, '\n')
+    .replace(/ ([,.;:?!…»)])/g, '$1')
+    .replace(/([¿¡«(]) /g, '$1')
+    .replace(/([,;:])\1+/g, '$1').replace(/\.{2,}/g, '…')
+    .replace(/([,.;:?!…»)])(?=[\p{L}\d¿¡«(])/gu, '$1 ')
+    .replace(/([\p{L}\d])([¿¡«(])/gu, '$1 $2');
+  // Mayúscula tras fin de oración dentro del trozo
+  s = s.replace(/([.?!…]\s+|\n)([¿¡«(]*)(\p{Ll})/gu, (m, a, b, c) => a + b + c.toUpperCase());
+  s = s.replace(/^ +/, '').replace(/ +$/, s.endsWith('\n') ? '' : '');
+  if (!s.trim() && !s.includes('\n')) return prev;
+  const base = prev.replace(/[ \t]+$/, '');
+  if (endsSentence(base)) s = s.replace(/^([¿¡«(]*)(\p{Ll})/u, (m, a, c) => a + c.toUpperCase());
+  let sep = ' ';
+  if (!base || base.endsWith('\n') || /[¿¡«(]$/.test(base) || /^[,.;:?!…»)\n]/.test(s)) sep = '';
+  return base + sep + s.replace(/ +$/, '');
+}
 function appendDictation(t){
   const s = curSession(); if (!s || !t) return;
   const now = Date.now();
   if (state.newBlock || now - state.lastAppend > 120000) {
-    s.text = (s.text.trim() ? s.text.replace(/\s+$/, '') + '\n' : '') + `[${fmtTime()}] ` + cap(t);
+    const head = (s.text.trim() ? s.text.replace(/\s+$/, '') + '\n' : '') + `[${fmtTime()}]`;
+    s.text = joinDictation(head, t.replace(/^\s*(?:nueva|siguiente)\s+l[ií]nea\s*/i, ''));
+    s.text = s.text.replace(/(\[\d{1,2}:\d{2}\])\n+/, '$1 ');
     state.newBlock = false;
   } else {
-    s.text = s.text.replace(/\s+$/, '') + ' ' + t;
+    s.text = joinDictation(s.text, t);
   }
   state.lastAppend = now;
   const b = curBook(); b.dirty = true; b.updated = now; persist();
   const ta = $('#ta-session');
-  if (state.screen === 'dictate') { ta.value = s.text; ta.scrollTop = ta.scrollHeight; updateCount(); }
+  if (state.screen === 'dictate') {
+    ta.value = s.text; ta.scrollTop = ta.scrollHeight; updateCount();
+    if (document.activeElement === ta) ta.setSelectionRange(ta.value.length, ta.value.length);
+  }
 }
-function setInterim(t){ $('#interim').textContent = t ? '… ' + t : ''; }
+function setInterim(t){ $('#interim').textContent = t ? '… ' + spokenPunct(t).replace(/\u0001/g, '¿?').replace(/\u0002/g, '¡!').replace(/\s+([,.;:?!…»)])/g, '$1').replace(/\n/g, ' ↵ ').trim() : ''; }
 $('#btn-rec').onclick = () => startDictation();
 $('#btn-pause').onclick = () => pauseDictation();
 $('#btn-resume').onclick = () => startDictation();
@@ -982,7 +1069,7 @@ function handleFinal(t){
   }
   if (voice.purpose === 'dictate') {
     const cmd = parseCommand(t);
-    if (cmd) { setInterim(''); runCommand(cmd); return; }
+    if (cmd && cmd.c !== 'open') { setInterim(''); runCommand(cmd); return; }
     const m = norm(t).match(/^(.*\S)\s+(parar|guardar)$/);
     if (m) { appendDictation(t.replace(/\s*\S+[.!]?\s*$/, '')); setInterim(''); runCommand({ c: m[2] === 'parar' ? 'stop' : 'save' }); return; }
     appendDictation(t); setInterim(''); return;
